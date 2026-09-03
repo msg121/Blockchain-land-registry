@@ -199,7 +199,14 @@ export default function MyProperties() {
                   </div>
                   
                   <div className="col-span-2 mt-2 flex flex-col sm:flex-row gap-2">
-
+                    <a 
+                      href={`/api/lookup?hash=${property.metadataHash}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={buttonVariants({ variant: "outline", size: "sm", className: "flex-1 text-primary hover:text-primary" })}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" /> View Document (IPFS)
+                    </a>
                     {property.verified && (
                       <Button 
                         variant="secondary" 
