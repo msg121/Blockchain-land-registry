@@ -222,14 +222,7 @@ export default function PendingTransactions() {
                     </div>
                     
                     <div className="col-span-2 mt-2">
-                      <a 
-                        href={`https://crimson-adverse-bonobo-788.mypinata.cloud/ipfs/${property.metadataHash.replace('ipfs://', '')}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className={buttonVariants({ variant: "outline", size: "sm", className: "w-full text-primary hover:text-primary" })}
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" /> View Document (IPFS)
-                      </a>
+
                     </div>
                   </CardContent>
                   <CardFooter className="flex gap-2 pt-4 border-t bg-secondary/5">

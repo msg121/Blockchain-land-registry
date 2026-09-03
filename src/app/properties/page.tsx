@@ -212,14 +212,7 @@ export default function PropertiesPage() {
                     <h4 className="text-sm font-medium text-primary mb-1 uppercase tracking-wider">IPFS Metadata Hash</h4>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <p className="font-mono text-base break-all bg-black/50 p-3 rounded-md border border-white/10 flex-1">{propertyData.metadataHash}</p>
-                      <a 
-                        href={`https://crimson-adverse-bonobo-788.mypinata.cloud/ipfs/${propertyData.metadataHash.replace('ipfs://', '')}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-12 px-4 py-2 w-full sm:w-auto"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" /> View Deed (PDF)
-                      </a>
+
                     </div>
                   </div>
                   {propertyData.pendingOwner !== '0x0000000000000000000000000000000000000000' && (
