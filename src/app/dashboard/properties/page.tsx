@@ -200,7 +200,7 @@ export default function MyProperties() {
                   
                   <div className="col-span-2 mt-2 flex flex-col sm:flex-row gap-2">
                     <a 
-                      href={`https://ipfs.io/ipfs/${property.metadataHash}`} 
+                      href={`https://ipfs.io/ipfs/${property.metadataHash.replace('ipfs://', '')}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className={buttonVariants({ variant: "outline", size: "sm", className: "flex-1 text-primary hover:text-primary" })}

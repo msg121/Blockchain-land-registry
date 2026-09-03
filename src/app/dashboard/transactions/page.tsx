@@ -223,7 +223,7 @@ export default function PendingTransactions() {
                     
                     <div className="col-span-2 mt-2">
                       <a 
-                        href={`https://ipfs.io/ipfs/${property.metadataHash}`} 
+                        href={`https://ipfs.io/ipfs/${property.metadataHash.replace('ipfs://', '')}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className={buttonVariants({ variant: "outline", size: "sm", className: "w-full text-primary hover:text-primary" })}
