@@ -25,11 +25,20 @@ export async function GET(request: Request) {
     
     // Reverse lookup: hash each CID and compare
     for (const pin of data.rows) {
-      const uri = `ipfs://${pin.ipfs_pin_hash}`;
-      const pinHash = keccak256(toBytes(uri));
+      const cid = pin.ipfs_pin_hash;
       
-      if (pinHash === hash) {
-        return NextResponse.redirect(`https://crimson-adverse-bonobo-788.mypinata.cloud/ipfs/${pin.ipfs_pin_hash}`);
+      const variations = [
+        `ipfs://${cid}`,
+        cid,
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://gateway.pinata.cloud/ipfs/${cid}`,
+        `ipfs://ipfs/${cid}`
+      ];
+
+      for (const uri of variations) {
+        if (keccak256(toBytes(uri)) === hash) {
+          return NextResponse.redirect(`https://crimson-adverse-bonobo-788.mypinata.cloud/ipfs/${cid}`);
+        }
       }
     }
 
