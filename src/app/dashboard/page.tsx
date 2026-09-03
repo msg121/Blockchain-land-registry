@@ -1,15 +1,49 @@
 'use client'
 
-import { useAccount } from 'wagmi'
+import { useAccount, useReadContract, useReadContracts } from 'wagmi'
+import { landRegistryABI } from '@/contracts/LandRegistry.abi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
-import { Building, ArrowLeftRight, Wallet } from 'lucide-react'
+import { Building, ArrowLeftRight, Wallet, Map, Ruler } from 'lucide-react'
 import Link from 'next/link'
 import { useIsMounted } from '@/hooks/use-is-mounted'
+import dynamic from 'next/dynamic'
+import { Skeleton } from '@/components/ui/skeleton'
+
+const DashboardMap = dynamic(() => import('@/components/map/DashboardMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-[400px] w-full bg-muted animate-pulse rounded-xl border border-primary/20"></div> 
+})
+
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`
 
 export default function DashboardOverview() {
   const { address, isConnected } = useAccount()
   
+  // 1. Get array of Property IDs owned by user
+  const { data: propertyIds, isLoading: isLoadingIds } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: landRegistryABI,
+    functionName: 'getPropertiesByOwner',
+    args: [address as `0x${string}`],
+    query: {
+      enabled: !!address,
+    }
+  })
+
+  // 2. Fetch details for each Property ID
+  const { data: propertiesData, isLoading: isLoadingDetails } = useReadContracts({
+    contracts: (propertyIds || []).map((id) => ({
+      address: CONTRACT_ADDRESS,
+      abi: landRegistryABI,
+      functionName: 'getProperty',
+      args: [id],
+    })),
+    query: {
+      enabled: !!propertyIds && propertyIds.length > 0,
+    }
+  })
+
   const isMounted = useIsMounted()
   if (!isMounted) return null
 
@@ -23,47 +57,103 @@ export default function DashboardOverview() {
     )
   }
 
+  const isLoading = isLoadingIds || (propertyIds?.length ? isLoadingDetails : false)
+
+  let verifiedCount = 0
+  let pendingCount = 0
+  let totalArea = 0n
+  const mapProperties: any[] = []
+
+  if (propertiesData && propertyIds) {
+    propertiesData.forEach((result, idx) => {
+      const prop = result.result as any
+      if (prop) {
+        if (prop.verified) verifiedCount++
+        if (prop.pendingOwner !== '0x0000000000000000000000000000000000000000') pendingCount++
+        totalArea += prop.area
+
+        mapProperties.push({
+          id: propertyIds[idx],
+          lat: Number(prop.latitudeE6) / 1000000,
+          lng: Number(prop.longitudeE6) / 1000000,
+          verified: prop.verified,
+          area: Number(prop.area)
+        })
+      }
+    })
+  }
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-        <p className="text-muted-foreground mt-2">Manage your digital properties and pending transfers.</p>
+        <p className="text-muted-foreground mt-2">Manage your digital properties and global assets.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-        <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl hover:border-primary/40 hover:shadow-primary/20 transition-all duration-500 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-3xl transition-all duration-500 group-hover:bg-primary/20"></div>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-base font-semibold text-slate-200 group-hover:text-white transition-colors">My Properties</CardTitle>
-            <div className="p-2 bg-primary/20 rounded-xl ring-1 ring-primary/30">
-              <Building className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-5xl font-bold mt-2 tracking-tighter text-white">--</div>
-            <p className="text-sm text-slate-400 mt-2 font-medium">Verified land records</p>
-            <Link href="/dashboard/properties" className={buttonVariants({ variant: "default", className: "w-full mt-6 shadow-lg shadow-primary/25" })}>
-              View properties →
-            </Link>
-          </CardContent>
-        </Card>
+      {isLoading ? (
+        <div className="grid gap-6 md:grid-cols-3">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl hover:border-primary/40 transition-all duration-500 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-24 bg-primary/10 rounded-full -mr-12 -mt-12 blur-3xl group-hover:bg-primary/20"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-semibold text-slate-200">Verified Properties</CardTitle>
+              <Building className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-bold mt-1 text-white">{verifiedCount}</div>
+              <p className="text-xs text-slate-400 mt-1">Out of {propertyIds?.length || 0} total</p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl hover:border-amber-500/40 hover:shadow-amber-500/20 transition-all duration-500 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"></div>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-base font-semibold text-slate-200 group-hover:text-white transition-colors">Pending Transactions</CardTitle>
-            <div className="p-2 bg-amber-500/20 rounded-xl ring-1 ring-amber-500/30">
-              <ArrowLeftRight className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-5xl font-bold mt-2 tracking-tighter text-white">--</div>
-            <p className="text-sm text-slate-400 mt-2 font-medium">Awaiting your approval</p>
-            <Link href="/dashboard/transactions" className={buttonVariants({ variant: "outline", className: "w-full mt-6 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" })}>
-              View transactions →
-            </Link>
-          </CardContent>
-        </Card>
+          <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl hover:border-green-500/40 transition-all duration-500 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-24 bg-green-500/10 rounded-full -mr-12 -mt-12 blur-3xl group-hover:bg-green-500/20"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-semibold text-slate-200">Total Land Area</CardTitle>
+              <Ruler className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-bold mt-1 text-white">{totalArea.toString()} <span className="text-lg font-normal text-slate-400">sqm</span></div>
+              <p className="text-xs text-slate-400 mt-1">Combined across all properties</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl hover:border-amber-500/40 transition-all duration-500 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-24 bg-amber-500/10 rounded-full -mr-12 -mt-12 blur-3xl group-hover:bg-amber-500/20"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-semibold text-slate-200">Pending Transfers</CardTitle>
+              <ArrowLeftRight className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-bold mt-1 text-white">{pendingCount}</div>
+              <p className="text-xs text-slate-400 mt-1">Awaiting confirmation</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+          <Map className="h-5 w-5 text-primary" /> Global Assets Map
+        </h2>
+        {isLoading ? (
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+        ) : (
+          <DashboardMap properties={mapProperties} />
+        )}
+      </div>
+      
+      <div className="flex gap-4 pt-4">
+        <Link href="/dashboard/properties" className={buttonVariants({ variant: "default", size: "lg" })}>
+          Manage Properties
+        </Link>
+        <Link href="/dashboard/transactions" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          View Transfers
+        </Link>
       </div>
     </div>
   )

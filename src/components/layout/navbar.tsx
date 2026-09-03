@@ -1,30 +1,20 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { useAccount, usePublicClient } from 'wagmi'
+import { usePublicClient } from 'wagmi'
 import { parseAbiItem } from 'viem'
 import { useIsMounted } from '@/hooks/use-is-mounted'
 import { Button } from '@/components/ui/button'
-import { Map, Menu, ChevronDown, Bell } from 'lucide-react'
+import { Map, Menu, Bell } from 'lucide-react'
 import { Connect } from '@/components/connect'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu"
+import { useRoles } from '@/hooks/useRoles'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`
 
 export function Navbar() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected, isAdmin, isRegistrar, isVerifier, isLegal } = useRoles()
   const publicClient = usePublicClient()
-  const router = useRouter()
   const isMounted = useIsMounted()
   const [hasUnread, setHasUnread] = useState(false)
 
@@ -102,6 +92,7 @@ export function Navbar() {
             <span className="hidden font-bold sm:inline-block">LandProof</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
+            {/* Base Public Links */}
             <Link href="/properties" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Explorer
             </Link>
@@ -111,27 +102,32 @@ export function Navbar() {
             <Link href="/activity" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Transactions
             </Link>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 outline-none cursor-pointer">
-                Portals <ChevronDown className="ml-1 h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Role Portals</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => router.push('/registrar')} className="cursor-pointer w-full">Registrar Portal</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/verifier')} className="cursor-pointer w-full">Verifier Portal</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/legal')} className="cursor-pointer w-full">Legal Portal</DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Admin Controls</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => router.push('/admin')} className="cursor-pointer w-full">Admin Dashboard</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/admin/roles')} className="cursor-pointer w-full">Role Management</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/admin/emergency')} className="cursor-pointer text-destructive focus:text-destructive w-full">Emergency Controls</DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            {/* Dynamic Role-Gated Links */}
+            {isMounted && isConnected && (
+              <>
+                {isRegistrar && (
+                  <Link href="/registrar" className="transition-colors hover:text-primary text-primary/80 font-semibold">
+                    Registrar Portal
+                  </Link>
+                )}
+                {isVerifier && (
+                  <Link href="/verifier" className="transition-colors hover:text-primary text-primary/80 font-semibold">
+                    Verifier Portal
+                  </Link>
+                )}
+                {isLegal && (
+                  <Link href="/legal" className="transition-colors hover:text-primary text-primary/80 font-semibold">
+                    Legal Portal
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link href="/admin" className="transition-colors hover:text-amber-500 text-amber-500/80 font-semibold">
+                    Admin Panel
+                  </Link>
+                )}
+              </>
+            )}
 
             <Link href="/about" className="transition-colors hover:text-foreground/80 text-foreground/60">
               About

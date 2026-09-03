@@ -109,10 +109,10 @@ export default function AdminPortal() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-12 px-4 space-y-8">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Manage roles and global contract state.</p>
+        <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
+        <p className="text-muted-foreground mt-2">Monitor global contract state and network info.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -161,110 +161,6 @@ export default function AdminPortal() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Role Management */}
-        {hasAdminRole && (
-          <Card className="border-primary/20 shadow-2xl bg-black/40 backdrop-blur-xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 p-32 bg-primary/10 rounded-full -ml-16 -mt-16 blur-3xl pointer-events-none"></div>
-            <CardHeader className="bg-primary/5 pb-4 border-b relative z-10">
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5 text-primary" /> Role Management
-              </CardTitle>
-              <CardDescription>Grant or revoke system roles.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleRoleAction} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Action</Label>
-                  <Select value={roleAction} onValueChange={(v) => { if(v) setRoleAction(v as 'grant'|'revoke') }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="grant">Grant Role</SelectItem>
-                      <SelectItem value="revoke">Revoke Role</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Select value={selectedRole} onValueChange={(v) => { if(v) setSelectedRole(v) }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="REGISTRAR">Registrar</SelectItem>
-                      <SelectItem value="VERIFIER">Verifier</SelectItem>
-                      <SelectItem value="LEGAL">Legal Authority</SelectItem>
-                      <SelectItem value="EMERGENCY">Emergency Control</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Target Address</Label>
-                  <Input 
-                    required placeholder="0x..." className="font-mono text-sm"
-                    value={targetAddress} onChange={(e) => setTargetAddress(e.target.value)}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isPending || isConfirming}>
-                  {isPending || isConfirming ? "Processing..." : "Submit Transaction"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Emergency Controls */}
-        {hasEmergencyRole && (
-          <Card className={`border shadow-2xl bg-black/40 backdrop-blur-xl relative overflow-hidden ${isPaused ? 'border-amber-500/50' : 'border-destructive/30'}`}>
-            <div className="absolute top-0 right-0 p-32 bg-destructive/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none"></div>
-            <CardHeader className={`pb-4 border-b relative z-10 ${isPaused ? 'bg-amber-500/10' : 'bg-destructive/10'}`}>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <ShieldAlert className="h-5 w-5" /> Emergency Controls
-              </CardTitle>
-              <CardDescription>
-                Pause the contract in case of a critical vulnerability.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6 text-center">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Current Status</p>
-                {isPaused ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
-                    <Pause className="h-4 w-4" /> CONTRACT PAUSED
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-bold">
-                    <Play className="h-4 w-4" /> ACTIVE
-                  </div>
-                )}
-              </div>
-
-              <Button 
-                variant={isPaused ? "default" : "destructive"} 
-                size="lg" 
-                className="w-full font-bold"
-                onClick={togglePause}
-                disabled={isPending || isConfirming}
-              >
-                {isPending || isConfirming ? "Processing..." : isPaused ? "UNPAUSE CONTRACT" : "PAUSE CONTRACT"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-      
-      {hash && (
-        <div className="p-4 bg-muted text-xs font-mono rounded-md break-all text-center">
-          Tx Hash: {hash}
-          {isSuccess && <p className="text-green-500 font-bold mt-2 flex items-center justify-center"><Check className="h-4 w-4 mr-1"/> Success!</p>}
-        </div>
-      )}
     </div>
   )
 }

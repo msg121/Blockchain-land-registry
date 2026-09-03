@@ -8,6 +8,6 @@ export const config = createConfig({
     injected(),
   ],
   transports: {
-    [sepolia.id]: http(),
+    [sepolia.id]: http('https://rpc2.sepolia.org'),
   },
 })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { landRegistryABI } from '@/contracts/LandRegistry.abi'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,25 +9,21 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ShieldAlert, PlusCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { keccak256, toBytes } from 'viem'
 import { useIsMounted } from '@/hooks/use-is-mounted'
 import { formatBytes32String, parseCoordinate } from '@/lib/format'
+import dynamic from 'next/dynamic'
+import { useRoles } from '@/hooks/useRoles'
+import Link from 'next/link'
+
+const PropertyMap = dynamic(() => import('@/components/map/PropertyMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-xl flex items-center justify-center border border-primary/20">Loading Map...</div> 
+})
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`
-const REGISTRAR_ROLE = keccak256(toBytes("REGISTRAR_ROLE"))
 
 export default function RegistrarPortal() {
-  const { address } = useAccount()
-
-  const { data: hasRole, isLoading: isCheckingRole } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: landRegistryABI,
-    functionName: 'hasRole',
-    args: [REGISTRAR_ROLE, address as `0x${string}`],
-    query: {
-      enabled: !!address,
-    }
-  })
+  const { isRegistrar: hasRole, isLoading: isCheckingRole } = useRoles()
 
   const { writeContract, data: hash, isPending } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
@@ -40,9 +36,38 @@ export default function RegistrarPortal() {
     latitude: '',
     longitude: ''
   })
+  const [isUploading, setIsUploading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const formDataObj = new FormData()
+    formDataObj.append('file', file)
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataObj,
+      })
+
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
+
+      const data = await res.json()
+      setFormData(prev => ({ ...prev, metadataUri: `ipfs://${data.IpfsHash}` }))
+      toast.success('Document uploaded to IPFS!')
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message}`)
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -84,6 +109,11 @@ export default function RegistrarPortal() {
         <p className="text-muted-foreground">
           Your wallet address does not have the <code className="bg-muted px-2 py-1 rounded">REGISTRAR_ROLE</code> required to mint new properties.
         </p>
+        <div className="pt-4">
+          <Link href="/properties">
+            <Button variant="default">Return to Explorer</Button>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -124,12 +154,36 @@ export default function RegistrarPortal() {
               </div>
             </div>
 
+            <div className="space-y-4 border p-4 rounded-lg bg-black/20">
+              <div>
+                <Label htmlFor="documentFile">Upload Legal Document (PDF/Image)</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  <Input 
+                    id="documentFile" type="file" 
+                    onChange={handleFileUpload} 
+                    disabled={isUploading}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                    accept=".pdf,image/*"
+                  />
+                  {isUploading && <span className="text-sm text-primary animate-pulse">Uploading...</span>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="metadataUri">Generated Document URI / Hash</Label>
+                <Input 
+                  id="metadataUri" name="metadataUri" required
+                  placeholder="ipfs://... or Document Hash" 
+                  value={formData.metadataUri} onChange={handleChange}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="metadataUri">Document URI / Hash</Label>
-              <Input 
-                id="metadataUri" name="metadataUri" required
-                placeholder="ipfs://... or Document Hash" 
-                value={formData.metadataUri} onChange={handleChange}
+              <Label>Property Location (Pick on Map)</Label>
+              <PropertyMap 
+                lat={formData.latitude} 
+                lng={formData.longitude} 
+                onChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
               />
             </div>
 

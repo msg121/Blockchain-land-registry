@@ -68,14 +68,7 @@ export default function EmergencyControlsPage() {
   }
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-destructive flex items-center">
-          <AlertTriangle className="mr-3 h-8 w-8" />
-          Emergency Controls
-        </h1>
-        <p className="text-muted-foreground mt-2">Suspend or resume core smart contract functionalities.</p>
-      </div>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       <Card className="border-destructive/50">
         <CardHeader className="bg-destructive/10 pb-4">

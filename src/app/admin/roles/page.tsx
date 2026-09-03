@@ -80,11 +80,7 @@ export default function RoleManagementPage() {
   }
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Role Management</h1>
-        <p className="text-muted-foreground mt-2">Grant or revoke system roles for specific addresses.</p>
-      </div>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       <Card>
         <CardHeader>
